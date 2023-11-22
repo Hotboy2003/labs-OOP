@@ -1,4 +1,5 @@
+.idea
 .vs 
 x64
-ConsoleApplication4.vcxproj
-ConsoleApplication4.vcxproj
+ConsoleApplication4.vcxproj.user
+ConsoleApplication4.vcxproj.filters
