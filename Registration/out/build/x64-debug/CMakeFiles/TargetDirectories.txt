@@ -1,0 +1,5 @@
+C:/Git/Labs_3_course/OOP/Registration/out/build/x64-debug/CMakeFiles/edit_cache.dir
+C:/Git/Labs_3_course/OOP/Registration/out/build/x64-debug/CMakeFiles/rebuild_cache.dir
+C:/Git/Labs_3_course/OOP/Registration/out/build/x64-debug/Registration/CMakeFiles/Registration.dir
+C:/Git/Labs_3_course/OOP/Registration/out/build/x64-debug/Registration/CMakeFiles/edit_cache.dir
+C:/Git/Labs_3_course/OOP/Registration/out/build/x64-debug/Registration/CMakeFiles/rebuild_cache.dir
