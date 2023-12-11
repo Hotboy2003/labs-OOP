@@ -19,11 +19,32 @@ public:
 
 // объект пользователя
 class User {
-public:
+private:
     int id;
     std::string login;
     std::string password;
     std::string name;
+
+public:
+    // конструктор по умолчанию
+    User() : id(0), login(""), password(""), name("") {}
+
+    // конструктор с параметрами
+    User(int id, const std::string& login, const std::string& password, const std::string& name)
+        : id(id), login(login), password(password), name(name) {}
+
+    // геттеры и сеттеры для всех полей класса
+    int getId() const { return id; }
+    void setId(int id) { this->id = id; }
+
+    std::string getLogin() const { return login; }
+    void setLogin(const std::string& login) { this->login = login; }
+
+    std::string getPassword() const { return password; }
+    void setPassword(const std::string& password) { this->password = password; }
+
+    std::string getName() const { return name; }
+    void setName(const std::string& name) { this->name = name; }
 
     // перегруженные операторы
     bool operator==(const User& other) const {
@@ -58,14 +79,20 @@ class FileUserRepository : public IRepository<T> {
 private:
     std::string filename = "users.txt";
 
-public:
+private:
     std::vector<T> GetAll() override {
         std::vector<T> users;
         T user;
         std::ifstream file(filename); // открываем файл
         // последовательно читаем файл и создаем объекты и помещаем их в вектор 
-        while (file >> user.id >> user.login >> user.password >> user.name) {
-            users.push_back(user); 
+        int id;
+        std::string login, password, name;
+        while (file >> id >> login >> password >> name) {
+            user.setId(id);
+            user.setLogin(login);
+            user.setPassword(password);
+            user.setName(name);
+            users.push_back(user);
         }
         file.close();
         return users;
@@ -73,8 +100,12 @@ public:
 
     void Add(const T& user) override {
         std::ofstream file(filename, std::ios_base::app); // открываем файл
-        file << user.id << " " << user.login << " " << user.password << " " << user.name << std::endl; // записываем переданный объект
+        file << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl; // записываем переданный объект
         file.close();
+
+        std::ofstream lastUserFile("last_user.txt");
+        lastUserFile << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl;
+        lastUserFile.close();
     }
 
     void Remove(const T& user) override {
@@ -89,7 +120,7 @@ public:
         // находим всех пользователей с указанным id в векторе
         // заменяет его на переданный объект пользователя
         for (T& u : users) {
-            if (u.id == user.id) {
+            if (u.getId() == user.getId()) {
                 u = user;
                 break;
             }
@@ -132,7 +163,7 @@ private:
         std::ofstream file(filename); // открываем файл
         // записываем пользователей из переданного ветора в файл
         for (const T& user : users) {
-            file << user.id << " " << user.login << " " << user.password << " " << user.name << std::endl;
+            file << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl;
         }
         file.close();
     }
@@ -152,7 +183,7 @@ public:
 
     void SignOut(const User& user) override {
         // соответствует ли переданный пользоватеь последнему вошедшему
-        if (lastLoggedInUser.id == user.id) {
+        if (lastLoggedInUser.getId() == user.getId()) {
             lastLoggedInUser = User{}; // Сбрасываем информацию о последнем вошедшем пользователе
             ClearLastLoggedInUserFile(); // очищаем файл с информацией о последнем вошедшем пользователе
         }
@@ -160,14 +191,14 @@ public:
 
     // проверяем авторизован ли какой-либо пользователь
     bool isAuthorized() const override {
-        return !lastLoggedInUser.name.empty();
+        return !lastLoggedInUser.getName().empty();
     }
 
 private:
     // сохраняем информацию о пользователе
     void SaveLastLoggedInUserToFile(const User& user) {
         std::ofstream file(lastLoggedInUserFile);
-        file << user.id << " " << user.login << " " << user.password << " " << user.name << std::endl;
+        file << user.getId() << " " << user.getLogin()<< " " << user.getPassword() << " " << user.getName()<< std::endl;
         file.close();
     }
 
@@ -180,49 +211,30 @@ private:
 
 int main() {
     setlocale(LC_ALL, "Russian");
-    FileUserRepository<User> userRepository;
-    FileUserManager userManager;
+    // создание репозитория пользователей
+    IRepository<User>* userRepository = new FileUserRepository<User>();
 
-    // Регистрация нового пользователя
-    User user1 = { 1, "user1", "password1", "Саша" };
-    userRepository.Add(user1);
+    // добавление пользователей
+    User user1(1, "Пользователь1", "password1", "Катя");
+    userRepository->Add(user1);
 
-    // Получение всех пользователей
-    std::vector<User> allUsers = userRepository.GetAll();
-    for (const User& user : allUsers) {
-        std::cout << "ID: " << user.id << ", Имя: " << user.name << ", Логин: " << user.login << std::endl;
+    User user2(2, "Пользователь2", "password2", "Саша");
+    userRepository->Add(user2);
+
+    // получение всех пользователей
+    std::vector<User> allUsers = userRepository->GetAll();
+    for (const auto& user : allUsers) {
+        std::cout << "Пользователь: " << user.getName() << std::endl;
     }
 
-    // Авторизация пользователя
-    userManager.SignIn(user1);
-    if (userManager.isAuthorized()) {
-        std::cout << "Пользователь " << user1.name << " авторизован." << std::endl;
-    }
+    // удаление пользователя
+    userRepository->Remove(user1);
 
-    // Изменение информации о пользователе
-    user1.name = "Александр";
-    userRepository.Update(user1);
+    // обновление пользователя
+    user2.setName("Александр");
+    userRepository->Update(user2);
 
-    // Получение пользователя по ID
-    User retrievedUser = userRepository.GetById(1);
-    if (retrievedUser.id != 0) {
-        std::cout << "Полученный Пользователь - ID: " << retrievedUser.id << ", Имя: " << retrievedUser.name << ", Логин: " << retrievedUser.login << std::endl;
-    }
-
-    // Удаление пользователя
-    // userRepository.Remove(retrievedUser);
-
-    // Попытка получения удаленного пользователя
-    User deletedUser = userRepository.GetById(1);
-    if (deletedUser.id == 0) {
-        std::cout << "Пользователь с ID 1 удален" << std::endl;
-    }
-
-    // Выход пользователя из аккаунта
-    userManager.SignOut(user1);
-    if (!userManager.isAuthorized()) {
-        std::cout << "Пользователь " << user1.name << " вышел." << std::endl;
-    }
+    delete userRepository;
 
     return 0;
 }
