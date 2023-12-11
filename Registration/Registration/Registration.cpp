@@ -126,6 +126,10 @@ private:
             }
         }
         UpdateFileContent(users); // обновление файла
+
+        std::ofstream lastUserFile("last_user.txt");
+        lastUserFile << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl;
+        lastUserFile.close();
     }
 
     User GetById(int id) {
@@ -171,7 +175,7 @@ private:
 
 class FileUserManager : public IUserManager {
 private:
-    std::string lastLoggedInUserFile = "last_logged_in_user.txt";
+    std::string lastLoggedInUserFile = "last_user.txt";
     std::string usersFile = "users.txt";
     User lastLoggedInUser;
 
