@@ -70,7 +70,6 @@ int main() {
     keyboard.UndoLastAction();
     keyboard.PerformAction('B'); // Выполнится действие "Action 2" снова
 
-    // Пример переназначения клавиши с перезапуском WorkFlow
     Action action3{ "Action 3" };
     keyboard.BindKey('C', action3);
     keyboard.SaveState();

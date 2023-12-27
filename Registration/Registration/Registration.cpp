@@ -74,15 +74,14 @@ public:
 };
 
 // интерфейс для работы с объектами пользователей
-template <class T>
-class FileUserRepository : public IRepository<T> {
+class FileUserRepository : public IUserRepository<User> {
 private:
     std::string filename = "users.txt";
 
-private:
-    std::vector<T> GetAll() override {
-        std::vector<T> users;
-        T user;
+public:
+    std::vector<User> GetAll() override {
+        std::vector<User> users;
+        User user;
         std::ifstream file(filename); // открываем файл
         // последовательно читаем файл и создаем объекты и помещаем их в вектор 
         int id;
@@ -98,7 +97,7 @@ private:
         return users;
     }
 
-    void Add(const T& user) override {
+    void Add(const User& user) override {
         std::ofstream file(filename, std::ios_base::app); // открываем файл
         file << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl; // записываем переданный объект
         file.close();
@@ -108,18 +107,18 @@ private:
         lastUserFile.close();
     }
 
-    void Remove(const T& user) override {
-        std::vector<T> users = GetAll(); // получаем всех пользователей
+    void Remove(const User& user) override {
+        std::vector<User> users = GetAll(); // получаем всех пользователей
         auto it = std::remove(users.begin(), users.end(), user); // удаляем пользователя из вектора
         users.erase(it, users.end());
         UpdateFileContent(users); // обновляем файл
     }
 
-    void Update(const T& user) override {
-        std::vector<T> users = GetAll(); // получаем всех пользователей
+    void Update(const User& user) override {
+        std::vector<User> users = GetAll(); // получаем всех пользователей
         // находим всех пользователей с указанным id в векторе
         // заменяет его на переданный объект пользователя
-        for (T& u : users) {
+        for (User& u : users) {
             if (u.getId() == user.getId()) {
                 u = user;
                 break;
@@ -132,46 +131,55 @@ private:
         lastUserFile.close();
     }
 
-    User GetById(int id) {
-        std::ifstream file(filename); // открываем файл
-        User user;
-        // последовательно читаем и ищем пользвателя с заданным id
-        while (file >> user.id >> user.login >> user.password >> user.name) {
-            if (user.id == id) {
-                file.close();
-                return user;
-            }
+    User GetById(int id) override {
+    std::ifstream file(filename);
+    User user;
+    int userId;
+    std::string login, password, name;
+    while (file >> userId >> login >> password >> name) {
+        if (userId == id) {
+            user.setId(userId);
+            user.setLogin(login);
+            user.setPassword(password);
+            user.setName(name);
+            file.close();
+            return user;
         }
-        file.close();
-        // Если пользователь с указанным ID не найден, вернем пустого пользователя
-        return User{};
     }
+    file.close();
+    return User{};
+}
 
-    User GetByLogin(const std::string& login) {
-        std::ifstream file(filename); // открываем файл
+    User GetByLogin(const std::string& login) override {
+        std::ifstream file(filename);
         User user;
-        // последовательно читаем и ищем пользователя с заданным логином
-        while (file >> user.id >> user.login >> user.password >> user.name) {
-            if (user.login == login) {
+        int userId;
+        std::string userLogin, password, name;
+        while (file >> userId >> userLogin >> password >> name) {
+            if (userLogin == login) {
+                user.setId(userId);
+                user.setLogin(userLogin);
+                user.setPassword(password);
+                user.setName(name);
                 file.close();
                 return user;
             }
         }
         file.close();
-        // Если пользователь с указанным логином не найден, вернем пустого пользователя
-        return User{};
+        return User{}; // Возвращаем пустого пользователя, если не нашли
     }
 
 private:
-    void UpdateFileContent(const std::vector<T>& users) {
+    void UpdateFileContent(const std::vector<User>& users) {
         std::ofstream file(filename); // открываем файл
         // записываем пользователей из переданного ветора в файл
-        for (const T& user : users) {
+        for (const User& user : users) {
             file << user.getId() << " " << user.getLogin() << " " << user.getPassword() << " " << user.getName() << std::endl;
         }
         file.close();
     }
 };
+
 
 class FileUserManager : public IUserManager {
 private:
@@ -216,7 +224,7 @@ private:
 int main() {
     setlocale(LC_ALL, "Russian");
     // создание репозитория пользователей
-    IRepository<User>* userRepository = new FileUserRepository<User>();
+    IUserRepository<User>* userRepository = new FileUserRepository;
 
     // добавление пользователей
     User user1(1, "Пользователь1", "password1", "Катя");
